@@ -9,20 +9,23 @@ class AIService {
   late final GenerativeModel _model;
 
   AIService(this._apiKey) {
-    _model = GenerativeModel(
-      model: ApiConstants.geminiModel,
-      apiKey: _apiKey,
-    );
+    _model = GenerativeModel(model: ApiConstants.geminiModel, apiKey: _apiKey);
   }
 
-  Future<String> getFinancialAdvice(List<TransactionModel> transactions, String username) async {
+  Future<String> getFinancialAdvice(
+    List<TransactionModel> transactions,
+    String username,
+  ) async {
     if (transactions.isEmpty) {
       return "Hi $username! Start adding your transactions so I can analyze your habits.";
     }
 
-    final transactionJson = jsonEncode(transactions.take(30).map((t) => t.toMap()).toList());
-    
-    final prompt = """
+    final transactionJson = jsonEncode(
+      transactions.take(30).map((t) => t.toMap()).toList(),
+    );
+
+    final prompt =
+        """
     You are a professional financial advisor AI.
     User's name: $username
     Analyzing this Transaction JSON:
@@ -44,7 +47,8 @@ class AIService {
   }
 
   Future<Map<String, dynamic>?> parseTransactionFromVoice(String text) async {
-    final prompt = """
+    final prompt =
+        """
     You are a financial parsing assistant. 
     Task: Extract transaction details from this text: "$text"
     
@@ -64,7 +68,10 @@ class AIService {
 
     try {
       final response = await _model.generateContent([Content.text(prompt)]);
-      final jsonStr = response.text?.replaceAll('```json', '').replaceAll('```', '').trim();
+      final jsonStr = response.text
+          ?.replaceAll('```json', '')
+          .replaceAll('```', '')
+          .trim();
       if (jsonStr == null) return null;
       return jsonDecode(jsonStr);
     } catch (e) {

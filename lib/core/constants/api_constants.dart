@@ -1,10 +1,10 @@
 class ApiConstants {
   // 💡 GOOGLE GEMINI AI CONFIGURATION
   // Get your key from: https://aistudio.google.com/app/apikey
-  static const String geminiApiKey = 'AIzaSyB1P5oqdbgAUht2xP3HpuA83Bzouny4cN4';
+  static const String geminiApiKey = 'AIzaSyAoB-pcEBMHMdejBUU0SLUXJ_iu8Tvi7Nk';
 
   // Model version used for high-speed financial analysis
-  static const String geminiModel = 'gemini-1.5-flash';
+  static const String geminiModel = 'gemini-3-flash-preview';
 
   // Base endpoints for any future external APIs (OpenWeather, Currencies, etc.)
   static const String baseUrl = 'https://api.aifinance.com/v1';

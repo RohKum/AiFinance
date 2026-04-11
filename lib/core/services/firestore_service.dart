@@ -20,6 +20,15 @@ class FirestoreService {
     }, SetOptions(merge: true));
   }
 
+  Future<Map<String, dynamic>?> getUserDoc(String userId) async {
+    try {
+      final doc = await _firestore.collection('users').doc(userId).get();
+      return doc.exists ? doc.data() : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> saveTransaction(String userId, TransactionModel transaction) async {
     await _transactions(userId).doc(transaction.id).set(transaction.toMap());
   }

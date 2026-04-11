@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aifin/core/constants/app_constants.dart';
 import 'package:aifin/core/providers/transaction_provider.dart';
 import 'package:aifin/data/models/transaction_model.dart';
+import 'package:aifin/core/providers/user_provider.dart';
 
 class ExpenseListScreen extends ConsumerStatefulWidget {
   const ExpenseListScreen({super.key});
@@ -20,7 +21,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
     final transactionsAsyncValue = ref.watch(transactionProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Transaction History', style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
@@ -37,7 +38,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: FilterChip(
-                    label: Text(filter, style: TextStyle(color: isSelected ? Colors.white : Colors.black)),
+                    label: Text(filter, style: TextStyle(color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color)),
                     selected: isSelected,
                     onSelected: (s) => setState(() => _selectedFilter = filter),
                     selectedColor: Colors.deepPurpleAccent,
@@ -53,11 +54,32 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                 List<TransactionModel> filteredTransactions = List.from(transactions);
                 final now = DateTime.now();
                 
+                final user = ref.watch(userProvider);
+                final cycleStartDay = int.tryParse(user?.preferences['cycleStartDate']?.toString() ?? '1') ?? 1;
+                DateTime cycleStart;
+                DateTime cycleEnd;
+                
+                if (now.day >= cycleStartDay) {
+                  cycleStart = DateTime(now.year, now.month, cycleStartDay);
+                  final nextMonth = now.month == 12 ? 1 : now.month + 1;
+                  final nextYear = now.month == 12 ? now.year + 1 : now.year;
+                  cycleEnd = DateTime(nextYear, nextMonth, cycleStartDay);
+                } else {
+                  final prevMonth = now.month == 1 ? 12 : now.month - 1;
+                  final prevYear = now.month == 1 ? now.year - 1 : now.year;
+                  cycleStart = DateTime(prevYear, prevMonth, cycleStartDay);
+                  cycleEnd = DateTime(now.year, now.month, cycleStartDay);
+                }
+                
                 if (_selectedFilter == 'This Week') {
                   final oneWeekAgo = now.subtract(const Duration(days: 7));
                   filteredTransactions = filteredTransactions.where((e) => e.date.isAfter(oneWeekAgo)).toList();
                 } else if (_selectedFilter == 'This Month') {
-                  filteredTransactions = filteredTransactions.where((e) => e.date.month == now.month && e.date.year == now.year).toList();
+                  filteredTransactions = filteredTransactions.where((e) {
+                    final isSameOrAfter = e.date.isAfter(cycleStart) || e.date.isAtSameMomentAs(cycleStart);
+                    final isBefore = e.date.isBefore(cycleEnd);
+                    return isSameOrAfter && isBefore;
+                  }).toList();
                 } else if (_selectedFilter == 'Oldest First') {
                   filteredTransactions.sort((a, b) => a.date.compareTo(b.date));
                 } else { 
@@ -97,13 +119,15 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
   }
 
   Widget _buildTransactionTile(BuildContext context, WidgetRef ref, TransactionModel transaction) {
+    final currencySymbol = ref.watch(userProvider)?.preferences['currency'] ?? AppConstants.currencySymbol;
+
     return Dismissible(
       key: Key(transaction.id),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 16, left: 20, right: 20),
         decoration: BoxDecoration(
           color: Colors.redAccent,
           borderRadius: BorderRadius.circular(20),
@@ -132,7 +156,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -162,7 +186,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                 children: [
                   Text(
                     transaction.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -173,7 +197,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
               ),
             ),
             Text(
-              '${transaction.isIncome ? "+" : "-"}${AppConstants.currencySymbol}${transaction.amount.toStringAsFixed(0)}',
+              '${transaction.isIncome ? "+" : "-"}$currencySymbol${transaction.amount.toStringAsFixed(0)}',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,

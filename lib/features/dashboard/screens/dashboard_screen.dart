@@ -13,6 +13,7 @@ class DashboardScreen extends ConsumerWidget {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
+    if (hour < 4) return 'Good Night,';
     if (hour < 12) return 'Good Morning,';
     if (hour < 17) return 'Good Afternoon,';
     return 'Good Evening,';
@@ -41,7 +42,11 @@ class DashboardScreen extends ConsumerWidget {
         .toList();
   }
 
-  Widget _buildSpendingChart(List<TransactionModel> transactions) {
+  Widget _buildSpendingChart(
+    BuildContext context,
+    List<TransactionModel> transactions,
+    String currencySymbol,
+  ) {
     final spots = _getWeeklySpendingData(transactions);
     final maxSpending = spots.isEmpty
         ? 0.0
@@ -55,7 +60,7 @@ class DashboardScreen extends ConsumerWidget {
       height: 240,
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -72,20 +77,20 @@ class DashboardScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Spending This Week',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               Text(
-                '${AppConstants.currencySymbol}${totalWeeklySpending.toStringAsFixed(0)}',
-                style: const TextStyle(
+                '$currencySymbol${totalWeeklySpending.toStringAsFixed(0)}',
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.deepPurpleAccent,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -98,11 +103,11 @@ class DashboardScreen extends ConsumerWidget {
                   handleBuiltInTouches: true,
                   touchTooltipData: LineTouchTooltipData(
                     getTooltipColor: (touchedSpot) =>
-                        Colors.deepPurple.shade700,
+                        Theme.of(context).colorScheme.primary,
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((LineBarSpot touchedSpot) {
                         return LineTooltipItem(
-                          '${AppConstants.currencySymbol}${touchedSpot.y.toStringAsFixed(0)}',
+                          '$currencySymbol${touchedSpot.y.toStringAsFixed(0)}',
                           const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -177,7 +182,7 @@ class DashboardScreen extends ConsumerWidget {
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
-                    color: Colors.deepPurpleAccent,
+                    color: Theme.of(context).colorScheme.primary,
                     barWidth: 4,
                     isStrokeCapRound: true,
                     dotData: FlDotData(
@@ -186,9 +191,9 @@ class DashboardScreen extends ConsumerWidget {
                       getDotPainter: (spot, percent, barData, index) =>
                           FlDotCirclePainter(
                             radius: 5,
-                            color: Colors.white,
+                            color: Theme.of(context).cardColor,
                             strokeWidth: 3,
-                            strokeColor: Colors.deepPurpleAccent,
+                            strokeColor: Theme.of(context).colorScheme.primary,
                           ),
                     ),
                     belowBarData: BarAreaData(
@@ -196,9 +201,13 @@ class DashboardScreen extends ConsumerWidget {
                       gradient: LinearGradient(
                         colors: [
                           // ignore: deprecated_member_use
-                          Colors.deepPurpleAccent.withOpacity(0.35),
+                          Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.35),
                           // ignore: deprecated_member_use
-                          Colors.deepPurpleAccent.withOpacity(0.0),
+                          Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -225,7 +234,7 @@ class DashboardScreen extends ConsumerWidget {
     final transactionsAsync = ref.watch(transactionProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -233,9 +242,9 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             GestureDetector(
               onTap: () => Navigator.of(context).pushNamed(RouteNames.profile),
-              child: const CircleAvatar(
-                backgroundColor: Colors.deepPurpleAccent,
-                child: Icon(Icons.person, color: Colors.white),
+              child: CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                child: const Icon(Icons.person, color: Colors.white),
               ),
             ),
             const SizedBox(width: 12),
@@ -252,52 +261,52 @@ class DashboardScreen extends ConsumerWidget {
                   user?.username ?? 'Guest User',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ],
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-            onPressed: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Logout'),
-                  content: const Text(
-                    'Are you sure you want to end your session?',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text(
-                        'Logout',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-              if (confirmed == true) {
-                await ref.read(userProvider.notifier).logout();
-                if (context.mounted) {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    RouteNames.login,
-                    (route) => false,
-                  );
-                }
-              }
-            },
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+        //     onPressed: () async {
+        //       final confirmed = await showDialog<bool>(
+        //         context: context,
+        //         builder: (context) => AlertDialog(
+        //           title: const Text('Logout'),
+        //           content: const Text(
+        //             'Are you sure you want to end your session?',
+        //           ),
+        //           actions: [
+        //             TextButton(
+        //               onPressed: () => Navigator.pop(context, false),
+        //               child: const Text('Cancel'),
+        //             ),
+        //             TextButton(
+        //               onPressed: () => Navigator.pop(context, true),
+        //               child: const Text(
+        //                 'Logout',
+        //                 style: TextStyle(color: Colors.red),
+        //               ),
+        //             ),
+        //           ],
+        //         ),
+        //       );
+        //       if (confirmed == true) {
+        //         await ref.read(userProvider.notifier).logout();
+        //         if (context.mounted) {
+        //           Navigator.pushNamedAndRemoveUntil(
+        //             context,
+        //             RouteNames.login,
+        //             (route) => false,
+        //           );
+        //         }
+        //       }
+        //     },
+        //   ),
+        // ],
       ),
       body: transactionsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -310,6 +319,8 @@ class DashboardScreen extends ConsumerWidget {
               .where((t) => t.type == TransactionType.expense)
               .fold(0.0, (sum, t) => sum + t.amount);
           final balance = totalIncome - totalExpenses;
+          final currencySymbol =
+              user?.preferences['currency'] ?? AppConstants.currencySymbol;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20.0),
@@ -320,15 +331,21 @@ class DashboardScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF5E35B1).withOpacity(0.3),
+                        color: Theme.of(
+                          context,
+                          // ignore: deprecated_member_use
+                        ).colorScheme.primary.withOpacity(0.3),
                         blurRadius: 15,
                         offset: const Offset(0, 10),
                       ),
@@ -343,7 +360,7 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        '${AppConstants.currencySymbol}${balance.toStringAsFixed(2)}',
+                        '$currencySymbol${balance.toStringAsFixed(2)}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 36,
@@ -356,13 +373,13 @@ class DashboardScreen extends ConsumerWidget {
                         children: [
                           _buildIncomeExpensePill(
                             'Income',
-                            '${AppConstants.currencySymbol}${totalIncome.toStringAsFixed(0)}',
+                            '$currencySymbol${totalIncome.toStringAsFixed(0)}',
                             Icons.arrow_downward,
                             Colors.greenAccent,
                           ),
                           _buildIncomeExpensePill(
                             'Expense',
-                            '${AppConstants.currencySymbol}${totalExpenses.toStringAsFixed(0)}',
+                            '$currencySymbol${totalExpenses.toStringAsFixed(0)}',
                             Icons.arrow_upward,
                             Colors.redAccent,
                           ),
@@ -374,7 +391,7 @@ class DashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 32),
 
                 // Interactive Spending Chart
-                _buildSpendingChart(transactions),
+                _buildSpendingChart(context, transactions, currencySymbol),
                 const SizedBox(height: 32),
 
                 // AI Insights Banner
@@ -384,7 +401,7 @@ class DashboardScreen extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -397,9 +414,9 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.auto_awesome,
-                          color: Colors.deepPurpleAccent,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(width: 16),
                         const Expanded(
@@ -470,10 +487,11 @@ class DashboardScreen extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.miniCenterDocked,
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.pushNamed(context, RouteNames.addExpense),
-        backgroundColor: Colors.deepPurpleAccent,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
       bottomNavigationBar: BottomAppBar(
@@ -484,7 +502,10 @@ class DashboardScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
             IconButton(
-              icon: const Icon(Icons.home, color: Colors.deepPurpleAccent),
+              icon: Icon(
+                Icons.home,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               onPressed: () {},
             ),
             IconButton(
@@ -551,14 +572,18 @@ class DashboardScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 // ignore: deprecated_member_use
                 BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10),
               ],
             ),
-            child: Icon(icon, color: Colors.deepPurpleAccent, size: 28),
+            child: Icon(
+              icon,
+              color: Theme.of(context).colorScheme.primary,
+              size: 28,
+            ),
           ),
           const SizedBox(height: 8),
           Text(

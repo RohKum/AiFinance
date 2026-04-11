@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aifin/core/constants/app_constants.dart';
 import 'package:aifin/core/providers/transaction_provider.dart';
 import 'package:aifin/data/models/transaction_model.dart';
+import 'package:aifin/core/providers/user_provider.dart';
 
 class BudgetScreen extends ConsumerWidget {
   const BudgetScreen({super.key});
@@ -14,7 +15,7 @@ class BudgetScreen extends ConsumerWidget {
     final transactionsAsync = ref.watch(transactionProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Monthly Budget', style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
@@ -23,15 +24,49 @@ class BudgetScreen extends ConsumerWidget {
       body: transactionsAsync.when(
         data: (transactions) {
           final now = DateTime.now();
-          // Filter ONLY expenses for this month
-          final monthlyExpenses = transactions.where(
-            (t) => t.type == TransactionType.expense && t.date.month == now.month && t.date.year == now.year,
-          );
+          final user = ref.watch(userProvider);
+          
+          // Determine custom Financial Cycle boundaries
+          final cycleStartDay = int.tryParse(user?.preferences['cycleStartDate']?.toString() ?? '1') ?? 1;
+          DateTime cycleStart;
+          DateTime cycleEnd;
+          
+          if (now.day >= cycleStartDay) {
+            cycleStart = DateTime(now.year, now.month, cycleStartDay);
+            final nextMonth = now.month == 12 ? 1 : now.month + 1;
+            final nextYear = now.month == 12 ? now.year + 1 : now.year;
+            cycleEnd = DateTime(nextYear, nextMonth, cycleStartDay);
+          } else {
+            final prevMonth = now.month == 1 ? 12 : now.month - 1;
+            final prevYear = now.month == 1 ? now.year - 1 : now.year;
+            cycleStart = DateTime(prevYear, prevMonth, cycleStartDay);
+            cycleEnd = DateTime(now.year, now.month, cycleStartDay);
+          }
+
+          // Filter ONLY expenses for this active custom cycle
+          final monthlyExpenses = transactions.where((t) {
+            if (t.type != TransactionType.expense) return false;
+            final isSameOrAfter = t.date.isAfter(cycleStart) || t.date.isAtSameMomentAs(cycleStart);
+            final isBefore = t.date.isBefore(cycleEnd);
+            return isSameOrAfter && isBefore;
+          });
+          
+          // Extract active user preferences
+          final val = user?.preferences['monthlyBudget'];
+          final double monthlyBudgetObj = (val != null) ? double.tryParse(val.toString()) ?? 40000.0 : 40000.0;
           
           final totalSpent = monthlyExpenses.fold(0.0, (sum, t) => sum + t.amount);
-          const double monthlyBudgetObj = 40000.0;
-          final double spendPercent = (totalSpent / monthlyBudgetObj).clamp(0.0, 1.0);
-          final bool isOverBudget = totalSpent > monthlyBudgetObj;
+          final double spendPercent = monthlyBudgetObj > 0 ? (totalSpent / monthlyBudgetObj).clamp(0.0, 1.0) : 0.0;
+          final bool isOverBudget = totalSpent > monthlyBudgetObj && monthlyBudgetObj > 0;
+
+          final currencySymbol = user?.preferences['currency'] ?? AppConstants.currencySymbol;
+          
+          final expenseCategories = user?.customCategories.where((c) => c['type'] == 'expense') ?? [];
+          final List<BudgetModel> dynamicBudgets = expenseCategories.map((c) => BudgetModel(
+            id: c['name'], 
+            categoryName: c['name'], 
+            monthlyLimit: double.tryParse(c['limit'].toString()) ?? 5000.0,
+          )).toList();
 
           return Padding(
             padding: const EdgeInsets.all(24),
@@ -42,15 +77,15 @@ class BudgetScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
+                    gradient: LinearGradient(
+                      colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.primary.withOpacity(0.8)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF5E35B1).withOpacity(0.3),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                         blurRadius: 15,
                         offset: const Offset(0, 10),
                       ),
@@ -63,8 +98,8 @@ class BudgetScreen extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('${AppConstants.currencySymbol}${totalSpent.toStringAsFixed(0)}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-                          Text(' / ${AppConstants.currencySymbol}${monthlyBudgetObj.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white54)),
+                          Text('$currencySymbol${totalSpent.toStringAsFixed(0)}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+                          Text(' / $currencySymbol${monthlyBudgetObj.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white54)),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -85,12 +120,12 @@ class BudgetScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: _predefinedBudgets.length,
+                    itemCount: dynamicBudgets.length,
                     itemBuilder: (context, index) {
-                      final budget = _predefinedBudgets[index];
+                      final budget = dynamicBudgets[index];
                       final categorySpend = monthlyExpenses.where((t) => t.category == budget.categoryName).fold(0.0, (sum, t) => sum + t.amount);
                       final activeBudget = budget.copyWith(currentSpend: categorySpend);
-                      return _buildCategoryBudgetCard(activeBudget);
+                      return _buildCategoryBudgetCard(context, activeBudget, currencySymbol);
                     },
                   ),
                 ),
@@ -104,16 +139,10 @@ class BudgetScreen extends ConsumerWidget {
     );
   }
 
-  List<BudgetModel> get _predefinedBudgets => [
-    BudgetModel(id: 'b1', categoryName: 'Food & Dining', monthlyLimit: 15000),
-    BudgetModel(id: 'b2', categoryName: 'Transportation', monthlyLimit: 5000),
-    BudgetModel(id: 'b3', categoryName: 'Shopping', monthlyLimit: 10000),
-    BudgetModel(id: 'b4', categoryName: 'Entertainment', monthlyLimit: 4000),
-    BudgetModel(id: 'b5', categoryName: 'Bills & Utilities', monthlyLimit: 6000),
-  ];
+  // No predefinedBudgets anymore! Fully Dynamic.
 
-  Widget _buildCategoryBudgetCard(BudgetModel budget) {
-    final double percent = (budget.currentSpend / budget.monthlyLimit).clamp(0.0, 1.0);
+  Widget _buildCategoryBudgetCard(BuildContext context, BudgetModel budget, String currencySymbol) {
+    final double percent = budget.monthlyLimit > 0 ? (budget.currentSpend / budget.monthlyLimit).clamp(0.0, 1.0) : 0.0;
     final bool isOver = budget.currentSpend > budget.monthlyLimit;
     final int percentInt = (percent * 100).toInt();
 
@@ -140,7 +169,7 @@ class BudgetScreen extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -170,11 +199,11 @@ class BudgetScreen extends ConsumerWidget {
               children: [
                 Text(
                   budget.categoryName,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${AppConstants.currencySymbol}${budget.currentSpend.toStringAsFixed(0)} / ${AppConstants.currencySymbol}${budget.monthlyLimit.toStringAsFixed(0)}',
+                  '$currencySymbol${budget.currentSpend.toStringAsFixed(0)} / $currencySymbol${budget.monthlyLimit.toStringAsFixed(0)}',
                   style: TextStyle(
                     color: isOver ? Colors.redAccent : Colors.grey[600],
                     fontSize: 14,
@@ -185,7 +214,7 @@ class BudgetScreen extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 4.0),
                     child: Text(
-                      'Over budget by ${AppConstants.currencySymbol}${(budget.currentSpend - budget.monthlyLimit).toStringAsFixed(0)}',
+                      'Over budget by $currencySymbol${(budget.currentSpend - budget.monthlyLimit).toStringAsFixed(0)}',
                       style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -213,7 +242,7 @@ class BudgetScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: isOver ? Colors.redAccent : Colors.black87,
+                  color: isOver ? Colors.redAccent : Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
             ],

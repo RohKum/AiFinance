@@ -11,14 +11,20 @@ class AiInsightsScreen extends ConsumerWidget {
     final aiInsights = ref.watch(aiInsightsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('AI Financial Advisor', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'AI Financial Advisor',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.primaryGradientStart),
+            icon: const Icon(
+              Icons.refresh,
+              color: AppColors.primaryGradientStart,
+            ),
             onPressed: () => ref.refresh(aiInsightsProvider),
           ),
         ],
@@ -34,12 +40,22 @@ class AiInsightsScreen extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
-                    BoxShadow(color: const Color(0xFF5E35B1).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 10)),
+                    // ignore: deprecated_member_use
+                    BoxShadow(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 10),
+                    ),
                   ],
                 ),
                 child: const Column(
@@ -48,7 +64,11 @@ class AiInsightsScreen extends ConsumerWidget {
                     SizedBox(height: 12),
                     Text(
                       'Your Personal AI Advisor',
-                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       'AI is analyzing your patterns...',
@@ -58,26 +78,38 @@ class AiInsightsScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 32),
-              
-              const Text(
-                'Financial Recommendations',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+
+              Text(
+                'Analysis Results',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
               ),
               const SizedBox(height: 16),
-              
+
               // Advice Card
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
-                    BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4)),
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
                   ],
                 ),
                 child: SelectableText(
                   advice,
-                  style: const TextStyle(fontSize: 15, height: 1.6, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 1.6,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
                 ),
               ),
             ],
@@ -89,14 +121,20 @@ class AiInsightsScreen extends ConsumerWidget {
             children: [
               CircularProgressIndicator(color: AppColors.primaryGradientStart),
               SizedBox(height: 16),
-              Text('Consulting with AI Advisor...', style: TextStyle(color: Colors.grey)),
+              Text(
+                'Consulting with AI Advisor...',
+                style: TextStyle(color: Colors.grey),
+              ),
             ],
           ),
         ),
         error: (err, stack) => Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
-            child: Text('AI is unavailable right now. Try checking your API key!\n\nDetails: $err', textAlign: TextAlign.center),
+            child: Text(
+              'AI is unavailable right now. Try checking your API key!\n\nDetails: $err',
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ),

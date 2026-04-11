@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:aifin/core/constants/app_constants.dart';
 import 'package:aifin/core/providers/transaction_provider.dart';
 import 'package:aifin/core/services/speech_service.dart';
+import 'package:aifin/core/providers/user_provider.dart';
 import 'package:aifin/features/ai_insights/providers/ai_provider.dart';
 import 'package:aifin/data/models/transaction_model.dart';
 
@@ -69,9 +70,10 @@ class _VoiceAssistantSheetState extends ConsumerState<VoiceAssistantSheet> {
       await ref.read(transactionProvider.notifier).addTransaction(transaction);
       
       if (mounted) {
+        final currencySymbol = ref.read(userProvider)?.preferences['currency'] ?? AppConstants.currencySymbol;
         setState(() {
           _isParsing = false;
-          _text = 'Perfect! Saved "${transaction.title}" for ${AppConstants.currencySymbol}${transaction.amount}.';
+          _text = 'Perfect! Saved "${transaction.title}" for $currencySymbol${transaction.amount}.';
         });
         
         Future.delayed(const Duration(seconds: 2), () {
@@ -111,7 +113,7 @@ class _VoiceAssistantSheetState extends ConsumerState<VoiceAssistantSheet> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F9FC),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -119,7 +121,7 @@ class _VoiceAssistantSheetState extends ConsumerState<VoiceAssistantSheet> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: _isListening ? Colors.deepPurpleAccent : Colors.black87,
+                color: _isListening ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
                 fontStyle: _isListening ? FontStyle.italic : FontStyle.normal,
               ),
             ),
