@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1084730615314",
+    "project_id": "aifin-7b3b0",
+    "storage_bucket": "aifin-7b3b0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1084730615314:android:57b0246ab939ddfa7b9acb",
+        "android_client_info": {
+          "package_name": "com.AiFin.com"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1084730615314-f01gsm8vlvrs9k5bcnjv2n38gshn865d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.AiFin.com",
+            "certificate_hash": "e7b44db6b083d3284f3a5a3ae04aa29119354924"
+          }
+        },
+        {
+          "client_id": "1084730615314-gsq927mgb74f78cd7rhkphr9g6aenbm2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdZYvAaV_ZfT_LD15O6a0qNJ74qUKPFmM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1084730615314-gsq927mgb74f78cd7rhkphr9g6aenbm2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
