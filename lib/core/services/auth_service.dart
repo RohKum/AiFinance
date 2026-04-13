@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:aifin/data/models/user_model.dart';
+import 'package:aifin/core/constants/app_constants.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -23,7 +24,8 @@ class AuthService {
       username: username,
       email: firebaseUser.email ?? email,
       jwtToken: token,
-      preferences: {'currency': 'INR', 'theme': 'light'},
+      createdAt: firebaseUser.metadata.creationTime,
+      preferences: {'currency': AppConstants.currencySymbol, 'theme': 'light'},
     );
   }
 
@@ -42,7 +44,8 @@ class AuthService {
       username: firebaseUser.displayName ?? email.split('@')[0],
       email: firebaseUser.email ?? email,
       jwtToken: token,
-      preferences: {'currency': 'INR', 'theme': 'light'},
+      createdAt: firebaseUser.metadata.creationTime,
+      preferences: {'currency': AppConstants.currencySymbol, 'theme': 'light'},
     );
   }
 
@@ -73,7 +76,8 @@ class AuthService {
       username: firebaseUser.displayName ?? googleUser.displayName ?? 'Google User',
       email: firebaseUser.email ?? googleUser.email,
       jwtToken: token,
-      preferences: {'currency': 'INR', 'theme': 'light'},
+      createdAt: firebaseUser.metadata.creationTime,
+      preferences: {'currency': AppConstants.currencySymbol, 'theme': 'light'},
     );
   }
 
@@ -91,7 +95,8 @@ class AuthService {
         username: firebaseUser.displayName ?? firebaseUser.email?.split('@')[0] ?? 'User',
         email: firebaseUser.email ?? '',
         jwtToken: token,
-        preferences: {'currency': 'INR', 'theme': 'light'},
+        createdAt: firebaseUser.metadata.creationTime,
+        preferences: {'currency': AppConstants.currencySymbol, 'theme': 'light'},
       );
     }
     return null;
@@ -105,8 +110,9 @@ class AuthService {
         id: user.uid,
         username: user.displayName ?? user.email?.split('@')[0] ?? 'User',
         email: user.email ?? '',
-        jwtToken: '', // Token will be automatically verified and updated via authStateChanges stream later
-        preferences: {'currency': 'INR', 'theme': 'light'},
+        jwtToken: '',
+        createdAt: user.metadata.creationTime,
+        preferences: {'currency': AppConstants.currencySymbol, 'theme': 'light'},
       );
     }
     return null;
@@ -122,8 +128,16 @@ class AuthService {
         username: firebaseUser.displayName ?? firebaseUser.email?.split('@')[0] ?? 'User',
         email: firebaseUser.email ?? '',
         jwtToken: token,
-        preferences: {'currency': 'INR', 'theme': 'light'},
+        createdAt: firebaseUser.metadata.creationTime,
+        preferences: {'currency': AppConstants.currencySymbol, 'theme': 'light'},
       );
     });
+  }
+
+  Future<void> updateDisplayName(String newName) async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await user.updateDisplayName(newName);
+    }
   }
 }

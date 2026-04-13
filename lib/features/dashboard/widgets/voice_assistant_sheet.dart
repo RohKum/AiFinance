@@ -12,17 +12,18 @@ class VoiceAssistantSheet extends ConsumerStatefulWidget {
   const VoiceAssistantSheet({super.key});
 
   @override
-  ConsumerState<VoiceAssistantSheet> createState() => _VoiceAssistantSheetState();
+  ConsumerState<VoiceAssistantSheet> createState() =>
+      _VoiceAssistantSheetState();
 }
 
 class _VoiceAssistantSheetState extends ConsumerState<VoiceAssistantSheet> {
-  String _text = 'How can I help you today?';
+  String _text = 'Tap the microphone and say your expense';
   bool _isListening = false;
   bool _isParsing = false;
 
   void _listen() async {
     final speech = ref.read(speechServiceProvider);
-    
+
     if (!_isListening) {
       bool available = await speech.initialize();
       if (available) {
@@ -63,38 +64,45 @@ class _VoiceAssistantSheetState extends ConsumerState<VoiceAssistantSheet> {
         amount: (result['amount'] as num).toDouble(),
         category: result['category'] ?? 'Other',
         date: DateTime.now(),
-        type: (result['type'] == 'income') ? TransactionType.income : TransactionType.expense,
+        type: (result['type'] == 'income')
+            ? TransactionType.income
+            : TransactionType.expense,
       );
 
       // Add to database
       await ref.read(transactionProvider.notifier).addTransaction(transaction);
-      
+
       if (mounted) {
-        final currencySymbol = ref.read(userProvider)?.preferences['currency'] ?? AppConstants.currencySymbol;
+        final currencySymbol =
+            ref.read(userProvider)?.preferences['currency'] ??
+            AppConstants.currencySymbol;
         setState(() {
           _isParsing = false;
-          _text = 'Perfect! Saved "${transaction.title}" for $currencySymbol${transaction.amount}.';
+          _text =
+              'Perfect! Saved "${transaction.title}" for $currencySymbol${transaction.amount}.';
         });
-        
+
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) Navigator.pop(context);
         });
       }
     } else {
-       setState(() {
-          _isParsing = false;
-          _text = "I couldn't quite catch the details. Can you try again?";
-       });
+      setState(() {
+        _isParsing = false;
+        _text = "I couldn't quite catch the details. Can you try again?";
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(32),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -102,12 +110,19 @@ class _VoiceAssistantSheetState extends ConsumerState<VoiceAssistantSheet> {
           Container(
             width: 40,
             height: 4,
-            decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           const SizedBox(height: 32),
           Text(
-            _isParsing ? 'Processing...' : (_isListening ? 'Listening...' : 'AI Voice Assistant'),
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            _isParsing
+                ? 'Processing...'
+                : (_isListening ? 'Listening...' : 'Voice Ledger'),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 24),
           Container(
@@ -121,7 +136,9 @@ class _VoiceAssistantSheetState extends ConsumerState<VoiceAssistantSheet> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: _isListening ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
+                color: _isListening
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).textTheme.bodyLarge?.color,
                 fontStyle: _isListening ? FontStyle.italic : FontStyle.normal,
               ),
             ),
@@ -133,29 +150,42 @@ class _VoiceAssistantSheetState extends ConsumerState<VoiceAssistantSheet> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: _isListening ? Colors.redAccent : Colors.deepPurpleAccent,
+                color: _isListening
+                    ? Colors.redAccent
+                    : theme.colorScheme.primary,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: (_isListening ? Colors.redAccent : Colors.deepPurpleAccent).withOpacity(0.3),
+                    // ignore: deprecated_member_use
+                    color:
+                        (_isListening
+                                ? Colors.redAccent
+                                : theme.colorScheme.primary)
+                            .withOpacity(0.3),
                     blurRadius: 20,
                     spreadRadius: 5,
-                  )
+                  ),
                 ],
               ),
-              child: _isParsing 
-                ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                : Icon(
-                    _isListening ? Icons.stop : Icons.mic,
-                    color: Colors.white,
-                    size: 32,
-                  ),
+              child: _isParsing
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : Icon(
+                      _isListening ? Icons.stop : Icons.mic,
+                      color: Colors.white,
+                      size: 32,
+                    ),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             _isListening ? 'Tap to Stop' : 'Tap to Start Speaking',
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            style: TextStyle(
+              // ignore: deprecated_member_use
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 20),
         ],

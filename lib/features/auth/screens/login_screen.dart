@@ -72,6 +72,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -109,9 +112,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
+                  decoration: BoxDecoration(
+                    color: theme.scaffoldBackgroundColor,
+                    borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(40),
                       topRight: Radius.circular(40),
                     ),
@@ -122,14 +125,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
+                          Text(
                             'Welcome Back',
-                            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Login to manage your finances safely.',
-                            style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                            style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 15),
                           ),
                           const SizedBox(height: 40),
                           
@@ -139,19 +142,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
                               labelText: 'Email Address',
-                              labelStyle: TextStyle(color: Colors.grey[600]),
+                              labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
                               prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primaryGradientStart),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.1)),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: const BorderSide(color: AppColors.primaryGradientStart, width: 2),
                               ),
                               filled: true,
-                              fillColor: Colors.grey.shade50,
+                              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) return 'Email is required';
@@ -167,12 +170,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             obscureText: !_isPasswordVisible,
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              labelStyle: TextStyle(color: Colors.grey[600]),
+                              labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
                               prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primaryGradientStart),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                                  color: Colors.grey,
+                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
                                 ),
                                 onPressed: () {
                                   setState(() => _isPasswordVisible = !_isPasswordVisible);
@@ -181,14 +184,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.1)),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: const BorderSide(color: AppColors.primaryGradientStart, width: 2),
                               ),
                               filled: true,
-                              fillColor: Colors.grey.shade50,
+                              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) return 'Password is required';
@@ -240,12 +243,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           // OR Divider
                           Row(
                             children: [
-                              Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                              Expanded(child: Divider(color: theme.colorScheme.onSurface.withOpacity(0.1), thickness: 1)),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text('OR', style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.bold)),
+                                child: Text('OR', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5), fontWeight: FontWeight.bold)),
                               ),
-                              Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                              Expanded(child: Divider(color: theme.colorScheme.onSurface.withOpacity(0.1), thickness: 1)),
                             ],
                           ),
                           const SizedBox(height: 24),
@@ -257,11 +260,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png',
                               height: 24,
                             ),
-                            label: const Text('Sign in with Google', style: TextStyle(fontSize: 16, color: Colors.black87, fontWeight: FontWeight.bold)),
+                            label: Text('Sign in with Google', style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              side: BorderSide(color: Colors.grey.shade300),
+                              side: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.2)),
                             ),
                           ),
                           
@@ -270,7 +273,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('Don\'t have an account?', style: TextStyle(color: Colors.grey[600])),
+                              Text('Don\'t have an account?', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6))),
                               TextButton(
                                 onPressed: () => Navigator.pushReplacementNamed(context, RouteNames.signup),
                                 child: const Text('Sign Up', style: TextStyle(color: AppColors.primaryGradientEnd, fontWeight: FontWeight.bold)),

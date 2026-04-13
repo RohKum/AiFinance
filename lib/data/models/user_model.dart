@@ -4,6 +4,7 @@ class UserModel {
   final String email;
   final String? jwtToken;
   final Map<String, dynamic> preferences;
+  final DateTime? createdAt;
 
   const UserModel({
     required this.id,
@@ -11,6 +12,7 @@ class UserModel {
     required this.email,
     this.jwtToken,
     this.preferences = const {},
+    this.createdAt,
   });
 
   UserModel copyWith({
@@ -19,6 +21,7 @@ class UserModel {
     String? email,
     String? jwtToken,
     Map<String, dynamic>? preferences,
+    DateTime? createdAt,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -26,6 +29,7 @@ class UserModel {
       email: email ?? this.email,
       jwtToken: jwtToken ?? this.jwtToken,
       preferences: preferences ?? this.preferences,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -36,6 +40,7 @@ class UserModel {
       'email': email,
       'jwtToken': jwtToken,
       'preferences': preferences,
+      'createdAt': createdAt?.millisecondsSinceEpoch,
     };
   }
 
@@ -45,8 +50,10 @@ class UserModel {
       username: map['username'] ?? '',
       email: map['email'] ?? '',
       jwtToken: map['jwtToken'],
-      // Safely clone Map to avoid mutability linkage
       preferences: Map<String, dynamic>.from(map['preferences'] ?? {}),
+      createdAt: map['createdAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int)
+          : null,
     );
   }
 }

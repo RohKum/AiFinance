@@ -62,6 +62,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -102,9 +105,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     horizontal: 32,
                     vertical: 40,
                   ),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
+                  decoration: BoxDecoration(
+                    color: theme.scaffoldBackgroundColor,
+                    borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(40),
                       topRight: Radius.circular(40),
                     ),
@@ -121,7 +124,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             textCapitalization: TextCapitalization.words,
                             decoration: InputDecoration(
                               labelText: 'Full Name',
-                              labelStyle: TextStyle(color: Colors.grey[600]),
+                              labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
                               prefixIcon: const Icon(
                                 Icons.person_outline,
                                 color: AppColors.primaryGradientStart,
@@ -132,7 +135,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
+                                  color: theme.colorScheme.onSurface.withOpacity(0.1),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -143,7 +146,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 ),
                               ),
                               filled: true,
-                              fillColor: Colors.grey.shade50,
+                              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().length < 2)
@@ -159,7 +162,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
                               labelText: 'Email Address',
-                              labelStyle: TextStyle(color: Colors.grey[600]),
+                              labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
                               prefixIcon: const Icon(
                                 Icons.email_outlined,
                                 color: AppColors.primaryGradientStart,
@@ -170,7 +173,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
+                                  color: theme.colorScheme.onSurface.withOpacity(0.1),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -181,7 +184,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 ),
                               ),
                               filled: true,
-                              fillColor: Colors.grey.shade50,
+                              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty)
@@ -199,7 +202,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             obscureText: !_isPasswordVisible,
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              labelStyle: TextStyle(color: Colors.grey[600]),
+                              labelStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
                               prefixIcon: const Icon(
                                 Icons.lock_outline,
                                 color: AppColors.primaryGradientStart,
@@ -209,7 +212,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   _isPasswordVisible
                                       ? Icons.visibility
                                       : Icons.visibility_off,
-                                  color: Colors.grey,
+                                  color: theme.colorScheme.onSurface.withOpacity(0.5),
                                 ),
                                 onPressed: () {
                                   setState(
@@ -224,7 +227,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
+                                  color: theme.colorScheme.onSurface.withOpacity(0.1),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -235,7 +238,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 ),
                               ),
                               filled: true,
-                              fillColor: Colors.grey.shade50,
+                              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty)
@@ -307,14 +310,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             children: [
                               Text(
                                 'Already have an account?',
-                                style: TextStyle(color: Colors.grey[600]),
+                                style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
                               ),
                               TextButton(
                                 onPressed: () => Navigator.pushReplacementNamed(
                                   context,
                                   RouteNames.login,
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'Login',
                                   style: TextStyle(
                                     color: AppColors.primaryGradientStart,

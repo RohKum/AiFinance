@@ -11,7 +11,6 @@ class AppConstants {
   // Localization & Formatting
   // ==========================================
   static const String currencySymbol = '₹';
-  static const String currencyCode = 'INR';
 
   // ==========================================
   // Networking / API (Ideally load from .env)
@@ -33,7 +32,7 @@ class AppConstants {
   static const double paddingLarge = 24.0;
   static const double paddingNormal = 16.0;
   static const double paddingSmall = 8.0;
-  
+
   static const double borderRadiusCard = 24.0;
   static const double borderRadiusButton = 12.0;
 
@@ -47,7 +46,7 @@ class AppConstants {
     'Entertainment',
     'Bills & Utilities',
     'Health',
-    'Other'
+    'Other',
   ];
 
   static const List<String> incomeCategories = [
@@ -55,7 +54,7 @@ class AppConstants {
     'Freelance',
     'Investment',
     'Gift',
-    'Other'
+    'Other',
   ];
 }
 
@@ -74,7 +73,18 @@ class AppColors {
   // Status Colors
   static const Color incomeGreen = Colors.greenAccent;
   static const Color expenseRed = Colors.redAccent;
-  
+
   // Accents
   static const Color aiAccentColor = Colors.deepPurpleAccent;
+
+  // Chart Colors (Premium Palette)
+  static const List<Color> chartColors = [
+    Color(0xFF6366F1), // Indigo
+    Color(0xFF10B981), // Emerald
+    Color(0xFFF59E0B), // Amber
+    Color(0xFFEF4444), // Red
+    Color(0xFF8B5CF6), // Violet
+    Color(0xFFEC4899), // Pink
+    Color(0xFF06B6D4), // Cyan
+  ];
 }

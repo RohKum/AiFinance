@@ -1,7 +1,7 @@
 class ApiConstants {
   // 💡 GOOGLE GEMINI AI CONFIGURATION
   // Get your key from: https://aistudio.google.com/app/apikey
-  static const String geminiApiKey = 'AIzaSyAoB-pcEBMHMdejBUU0SLUXJ_iu8Tvi7Nk';
+  static const String geminiApiKey = 'AIzaSyBXMvvGJwUTp1kS-dKp8g7c_sIeNKJFQWM';
 
   // Model version used for high-speed financial analysis
   static const String geminiModel = 'gemini-3-flash-preview';

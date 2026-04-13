@@ -1,81 +1,239 @@
-import 'dart:convert';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:aifin/data/models/transaction_model.dart';
 import 'package:aifin/core/constants/app_constants.dart';
-import 'package:aifin/core/constants/api_constants.dart';
 
 class AIService {
-  final String _apiKey;
-  late final GenerativeModel _model;
+  // Kept for compatibility so we don't break existing provider code,
+  // but it is no longer used for network calls.
 
-  AIService(this._apiKey) {
-    _model = GenerativeModel(model: ApiConstants.geminiModel, apiKey: _apiKey);
-  }
+  AIService();
 
   Future<String> getFinancialAdvice(
     List<TransactionModel> transactions,
     String username,
   ) async {
+    // Artificial delay to simulate "thinking" for visual effect
+    await Future.delayed(const Duration(seconds: 1));
+
     if (transactions.isEmpty) {
       return "Hi $username! Start adding your transactions so I can analyze your habits.";
     }
 
-    final transactionJson = jsonEncode(
-      transactions.take(30).map((t) => t.toMap()).toList(),
-    );
+    double totalIncome = 0;
+    double totalExpense = 0;
+    Map<String, double> categorySpending = {};
+
+    for (var t in transactions) {
+      if (t.type == TransactionType.income) {
+        totalIncome += t.amount;
+      } else {
+        totalExpense += t.amount;
+        categorySpending[t.category] =
+            (categorySpending[t.category] ?? 0) + t.amount;
+      }
+    }
+
+    final balance = totalIncome - totalExpense;
+    final savingRate = totalIncome > 0
+        ? ((balance / totalIncome) * 100).toStringAsFixed(1)
+        : "0.0";
+
+    // Find top spending category
+    String topCategory = "None";
+    double topCategoryAmount = 0;
+    categorySpending.forEach((key, value) {
+      if (value > topCategoryAmount) {
+        topCategoryAmount = value;
+        topCategory = key;
+      }
+    });
+
+    final String balanceSummary = balance > 0
+        ? "You have a **positive balance** of ${AppConstants.currencySymbol}${balance.toStringAsFixed(2)}. You're saving **$savingRate%** of your tracked income!"
+        : "Your tracked expenses exceed your income by **${AppConstants.currencySymbol}${balance.abs().toStringAsFixed(2)}**. Watch your budget closely.";
+
+    final String spendingInsight = topCategory != "None"
+        ? "Your biggest spending category is **$topCategory**, making up **${AppConstants.currencySymbol}${topCategoryAmount.toStringAsFixed(2)}** of your expenses. Keep an eye on this area to maximize savings."
+        : "You haven't logged any expenses yet, Great start!";
 
     final prompt =
         """
-    You are a professional financial advisor AI.
-    User's name: $username
-    Analyzing this Transaction JSON:
-    $transactionJson
+Hi **$username**, I am Aegis, your local AI financial advisor. Based on my analysis of your data:
 
-    Analyze these transactions (both income and expenses) and provide:
-    1. A summary of their current balance status.
-    2. Where most money is being spent.
-    3. Three tips to grow wealth.
-    Keep the tone premium and use markdown.
-    """;
+### 1. Balance Status
+$balanceSummary
 
-    try {
-      final response = await _model.generateContent([Content.text(prompt)]);
-      return response.text ?? "Unable to generate insights.";
-    } catch (e) {
-      return "Error generating insights: $e.";
-    }
+### 2. Spending Analysis
+$spendingInsight
+
+### 3. Actionable Wealth Tips
+* **The 50/30/20 Rule**: Aim to spend 50% on needs, 30% on wants, and save 20%.
+* **Audit Subscriptions**: Review your recurring costs this month to catch unused services.
+* **Emergency Fund**: Try setting up an automatic transfer on payday to build a cushion.
+""";
+
+    return prompt;
   }
 
   Future<Map<String, dynamic>?> parseTransactionFromVoice(String text) async {
-    final prompt =
-        """
-    You are a financial parsing assistant. 
-    Task: Extract transaction details from this text: "$text"
-    
-    Rules:
-    1. Extract: Title, Amount, Category, Type.
-    2. Valid Categories for Expenses: ${AppConstants.expenseCategories.join(", ")}
-    3. Valid Categories for Income: ${AppConstants.incomeCategories.join(", ")}
-    4. Type must be exactly 'income' or 'expense'.
-    5. Return ONLY a valid JSON object. No explanation.
-    
-    Example Input: "Spent 500 on dinner with friends"
-    Example JSON: {"title": "Dinner with friends", "amount": 500.0, "category": "Food & Dining", "type": "expense"}
+    // Simulate parsing delay for user experience
+    await Future.delayed(const Duration(milliseconds: 800));
 
-    Example Input: "Received 20000 salary for October"
-    Example JSON: {"title": "Salary for October", "amount": 20000.0, "category": "Salary", "type": "income"}
-    """;
+    final lowerText = text.toLowerCase();
 
-    try {
-      final response = await _model.generateContent([Content.text(prompt)]);
-      final jsonStr = response.text
-          ?.replaceAll('```json', '')
-          .replaceAll('```', '')
-          .trim();
-      if (jsonStr == null) return null;
-      return jsonDecode(jsonStr);
-    } catch (e) {
-      return null;
+    // 1. Extract Amount using Regex
+    final amountMatch = RegExp(r'\d+(\.\d+)?').firstMatch(lowerText);
+    if (amountMatch == null) return null; // Couldn't find a number
+
+    final amount = double.tryParse(amountMatch.group(0) ?? '0.0') ?? 0.0;
+
+    // 2. Determine Type (Expense vs Income)
+    String type = 'expense';
+    if (lowerText.contains('earn') ||
+        lowerText.contains('receiv') ||
+        lowerText.contains('got') ||
+        lowerText.contains('salary') ||
+        lowerText.contains('income')) {
+      type = 'income';
     }
+
+    // 3. Determine Category based on keywords
+    String category = 'Other';
+    if (type == 'expense') {
+      if (lowerText.contains('food') ||
+          lowerText.contains('dinner') ||
+          lowerText.contains('lunch') ||
+          lowerText.contains('mcdonald') ||
+          lowerText.contains('restaurant') ||
+          lowerText.contains('grocery'))
+        category = 'Food & Dining';
+      else if (lowerText.contains('uber') ||
+          lowerText.contains('cab') ||
+          lowerText.contains('train') ||
+          lowerText.contains('bus') ||
+          lowerText.contains('transport') ||
+          lowerText.contains('flight') ||
+          lowerText.contains('ticket'))
+        category = 'Transportation';
+      else if (lowerText.contains('shop') ||
+          lowerText.contains('bought') ||
+          lowerText.contains('shoe') ||
+          lowerText.contains('cloth') ||
+          lowerText.contains('amazon'))
+        category = 'Shopping';
+      else if (lowerText.contains('movie') ||
+          lowerText.contains('game') ||
+          lowerText.contains('netflix') ||
+          lowerText.contains('spotify') ||
+          lowerText.contains('fun'))
+        category = 'Entertainment';
+      else if (lowerText.contains('bill') ||
+          lowerText.contains('electric') ||
+          lowerText.contains('water') ||
+          lowerText.contains('internet') ||
+          lowerText.contains('wifi') ||
+          lowerText.contains('rent'))
+        category = 'Bills & Utilities';
+      else if (lowerText.contains('doctor') ||
+          lowerText.contains('medicin') ||
+          lowerText.contains('health') ||
+          lowerText.contains('gym') ||
+          lowerText.contains('pharmacy'))
+        category = 'Health';
+    } else {
+      if (lowerText.contains('salary') || lowerText.contains('pay'))
+        category = 'Salary';
+      else if (lowerText.contains('freelance') || lowerText.contains('client'))
+        category = 'Freelance';
+      else if (lowerText.contains('invest') ||
+          lowerText.contains('dividend') ||
+          lowerText.contains('stock'))
+        category = 'Investment';
+      else if (lowerText.contains('gift') || lowerText.contains('birthday'))
+        category = 'Gift';
+    }
+
+    // 4. Extract Noun/Subject for Title
+    // Remove the amount from the text
+    String nounPhrase = lowerText.replaceAll(amountMatch.group(0) ?? '', '');
+
+    // Remove common stop words, verbs, prepositions, and currencies
+    final stopWords = [
+      'i',
+      'my',
+      'me',
+      'we',
+      'he',
+      'she',
+      'they',
+      'it',
+      'spent',
+      'paid',
+      'bought',
+      'cost',
+      'gave',
+      'sent',
+      'spend',
+      'pay',
+      'buy',
+      'earned',
+      'received',
+      'got',
+      'made',
+      'took',
+      'earn',
+      'receive',
+      'get',
+      'make',
+      'on',
+      'for',
+      'at',
+      'to',
+      'in',
+      'of',
+      'with',
+      'about',
+      'from',
+      'a',
+      'an',
+      'the',
+      'some',
+      'any',
+      'this',
+      'that',
+      'rupees',
+      'rupee',
+      'rs',
+      'inr',
+      'dollars',
+      'dollar',
+      'bucks',
+      'cents',
+      'euro',
+    ];
+
+    final words = nounPhrase.split(RegExp(r'\s+'));
+    final filteredWords = words.where((w) {
+      final cleanWord = w.replaceAll(RegExp(r'[^a-z]'), '');
+      return cleanWord.isNotEmpty && !stopWords.contains(cleanWord);
+    }).toList();
+
+    String title = filteredWords.join(' ');
+
+    if (title.trim().isEmpty) {
+      title = category; // Fallback to category name if everything was stripped
+    } else {
+      title = title[0].toUpperCase() + title.substring(1);
+    }
+
+    if (title.length > 30) {
+      title = '${title.substring(0, 27)}...'; // Truncate long titles
+    }
+
+    return {
+      "title": title,
+      "amount": amount,
+      "category": category,
+      "type": type,
+    };
   }
 }

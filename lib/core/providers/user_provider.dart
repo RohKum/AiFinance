@@ -24,9 +24,16 @@ class UserNotifier extends Notifier<UserModel?> {
         final firestore = ref.read(firestoreServiceProvider);
         final userDoc = await firestore.getUserDoc(sessionUser.id);
         
-        if (userDoc != null && userDoc['preferences'] != null) {
-           final fetchedPrefs = Map<String, dynamic>.from(userDoc['preferences']);
-           state = sessionUser.copyWith(preferences: fetchedPrefs);
+        if (userDoc != null) {
+           final fetchedPrefs = (userDoc['preferences'] != null)
+               ? Map<String, dynamic>.from(userDoc['preferences'])
+               : sessionUser.preferences;
+           final fetchedName = userDoc['username'] as String? ?? sessionUser.username;
+           
+           state = sessionUser.copyWith(
+             username: fetchedName,
+             preferences: fetchedPrefs,
+           );
            
            if (fetchedPrefs.containsKey('theme')) {
              ref.read(themeProvider.notifier).updateTheme(fetchedPrefs['theme'] as String);
@@ -77,6 +84,8 @@ class UserNotifier extends Notifier<UserModel?> {
     if (state != null) {
       state = state!.copyWith(username: newName);
       await syncUserToCloud();
+      // Also update Firebase Auth's display name
+      await ref.read(authServiceProvider).updateDisplayName(newName);
     }
   }
 
